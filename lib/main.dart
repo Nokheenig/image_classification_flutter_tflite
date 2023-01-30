@@ -56,8 +56,8 @@ class MyHomePage extends StatefulWidget {
 
 class _MyHomePageState extends State<MyHomePage> {
 
-  File _image = File('assets/dummyImage.JPG');
-  List _results = [{"label":"chien","confidence":0.66},{"label":"chat","confidence":0.12}];
+  File _image = File("assets/dummyImage.JPG");
+  List _results = [{"label":"","confidence":0.0},{"label":"","confidence":0.0}];
 
   @override
   void initState() {
@@ -113,7 +113,7 @@ class _MyHomePageState extends State<MyHomePage> {
                     child: Text(
                       "${result["label"]} -  ${result["confidence"].toStringAsFixed(2)}",
                       style: TextStyle(
-                          color: Colors.white,
+                          color: Colors.blueAccent,
                           fontSize: 20.0,
                           fontWeight: FontWeight.bold),
                     ),
