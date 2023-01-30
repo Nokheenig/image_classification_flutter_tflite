@@ -1,4 +1,11 @@
+import 'dart:developer';
+
 import 'package:flutter/material.dart';
+import 'package:flutter/material.dart';
+import 'dart:async';
+import 'dart:io';
+import 'package:tflite/tflite.dart';
+import 'package:image_picker/image_picker.dart';
 
 void main() {
   runApp(const MyApp());
@@ -48,17 +55,19 @@ class MyHomePage extends StatefulWidget {
 }
 
 class _MyHomePageState extends State<MyHomePage> {
-  int _counter = 0;
 
-  void _incrementCounter() {
-    setState(() {
-      // This call to setState tells the Flutter framework that something has
-      // changed in this State, which causes it to rerun the build method below
-      // so that the display can reflect the updated values. If we changed
-      // _counter without calling setState(), then the build method would not be
-      // called again, and so nothing would appear to happen.
-      _counter++;
-    });
+  File _image = File('assets/dummyImage.JPG');
+  List _results = [{"label":"chien","confidence":0.66},{"label":"chat","confidence":0.12}];
+
+  @override
+  void initState() {
+    super.initState();
+    loadModel();
+  }
+
+  @override
+  void dispose() {
+    super.dispose();
   }
 
   @override
@@ -73,43 +82,92 @@ class _MyHomePageState extends State<MyHomePage> {
       appBar: AppBar(
         // Here we take the value from the MyHomePage object that was created by
         // the App.build method, and use it to set our appbar title.
-        title: Text(widget.title),
-      ),
-      body: Center(
-        // Center is a layout widget. It takes a single child and positions it
-        // in the middle of the parent.
-        child: Column(
-          // Column is also a layout widget. It takes a list of children and
-          // arranges them vertically. By default, it sizes itself to fit its
-          // children horizontally, and tries to be as tall as its parent.
-          //
-          // Invoke "debug painting" (press "p" in the console, choose the
-          // "Toggle Debug Paint" action from the Flutter Inspector in Android
-          // Studio, or the "Toggle Debug Paint" command in Visual Studio Code)
-          // to see the wireframe for each widget.
-          //
-          // Column has various properties to control how it sizes itself and
-          // how it positions its children. Here we use mainAxisAlignment to
-          // center the children vertically; the main axis here is the vertical
-          // axis because Columns are vertical (the cross axis would be
-          // horizontal).
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: <Widget>[
-            const Text(
-              'You have pushed the button this many times:',
-            ),
-            Text(
-              '$_counter',
-              style: Theme.of(context).textTheme.headline4,
-            ),
-          ],
-        ),
+        title: Text('Image classification'),
       ),
       floatingActionButton: FloatingActionButton(
-        onPressed: _incrementCounter,
-        tooltip: 'Increment',
-        child: const Icon(Icons.add),
+        onPressed: pickAnImage,
+        tooltip: 'Select Image',
+        child: const Icon(Icons.image),
       ), // This trailing comma makes auto-formatting nicer for build methods.
+      body: Column(
+        children: [
+          if (_image != null)
+            Container(margin: EdgeInsets.all(10), child: Image.file(_image))
+          else
+            Container(
+              margin: EdgeInsets.all(40),
+              child: Opacity(
+                opacity: 0.6,
+                child: Center(
+                  child: Text('No Image Selected!'),
+                ),
+              ),
+            ),
+          SingleChildScrollView(
+            child: Column(
+              children: _results != null
+                  ? _results.map((result) {
+                return Card(
+                  child: Container(
+                    margin: EdgeInsets.all(10),
+                    child: Text(
+                      "${result["label"]} -  ${result["confidence"].toStringAsFixed(2)}",
+                      style: TextStyle(
+                          color: Colors.white,
+                          fontSize: 20.0,
+                          fontWeight: FontWeight.bold),
+                    ),
+                  ),
+                );
+              }).toList()
+                  : [],
+            ),
+          ),
+        ],
+      ),
+
     );
   }
+
+  Future loadModel() async {
+    log("hey, it's me : loadModel");
+    Tflite.close();
+    String? res;
+    res = await Tflite.loadModel(
+      model: "assets/mobilenet_v1_1.0_224_1_default_1.tflite",
+      labels: "assets/imagenet_labels.txt",
+    );
+    print(res);
+  }
+
+  Future pickAnImage() async {
+    log("hey, it's me : pickAnImage");
+    // pick image and...
+    XFile? image;
+    image = await ImagePicker().pickImage(source: ImageSource.gallery);
+    if (image == null) return;
+    // Perform image classification on the selected image.
+    imageClassification(File(image.path));
+  }
+
+  Future imageClassification(File image) async {
+    log("hey, it's me : imageCLassification");
+    // Run tensorflowlite image classification model on the image
+    final List? results = await Tflite.runModelOnImage(
+      path: image.path,
+      numResults: 6,
+      threshold: 0.05,
+      imageMean: 127.5,
+      imageStd: 127.5,
+    );
+    log("results:");
+    if (results != null) results.forEach(print);
+// save the values in the variable we created and setstate
+    setState(() {
+      _results = results!;
+      _image = image;
+    });
+
+  }
+
 }
