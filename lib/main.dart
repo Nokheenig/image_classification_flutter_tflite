@@ -56,8 +56,8 @@ class MyHomePage extends StatefulWidget {
 
 class _MyHomePageState extends State<MyHomePage> {
 
-  File _image = File("assets/dummyImage.JPG");
-  List _results = [{"label":"","confidence":0.0},{"label":"","confidence":0.0}];
+  File? _image;// = Image.asset('assets/dummyImage.JPG');//File('assets/dummyImage.JPG');
+  List? _results;//= [{"label":"","confidence":0.0},{"label":"","confidence":0.0}];
 
   @override
   void initState() {
@@ -92,7 +92,7 @@ class _MyHomePageState extends State<MyHomePage> {
       body: Column(
         children: [
           if (_image != null)
-            Container(margin: EdgeInsets.all(10), child: Image.file(_image))
+            Container(margin: EdgeInsets.all(10), child: Image.file(_image!))
           else
             Container(
               margin: EdgeInsets.all(40),
@@ -106,7 +106,7 @@ class _MyHomePageState extends State<MyHomePage> {
           SingleChildScrollView(
             child: Column(
               children: _results != null
-                  ? _results.map((result) {
+                  ? _results!.map((result) {
                 return Card(
                   child: Container(
                     margin: EdgeInsets.all(10),
